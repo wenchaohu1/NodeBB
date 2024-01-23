@@ -1151,8 +1151,8 @@ describe('User', () => {
             });
         });
 
-        // // 313 Project #1 
-        it('should return an error if the file size is too big', async () => {
+        // 313 
+        it('should return an error if ProfileImageUploads not allowed', async () => {
             meta.config.allowProfileImageUploads = 0; 
             const picture = {
                         path: path.join(nconf.get('base_dir'), 'test/files/test_copy.png'),
@@ -1170,54 +1170,24 @@ describe('User', () => {
             } catch (error) { 
               assert.equal(error.message, '[[error:profile-image-uploads-disabled]]');
             }
-          });
+          }); 
 
-          it('should return an error if the file size is too big', async () => { 
-            const meta = {
-              config: {
-                allowProfileImageUploads: 1,
-                maximumProfileImageSize: 5, // Set a small value for testing
-                profileImageDimension: 100,
-              },
-            }; 
-            const picture = {
-              path: path.join(__dirname, 'files', 'test_copy.png'),
-              size: 10240, // Set a size greater than the maximumProfileImageSize
-              name: 'test.png',
-              type: 'image/png',
-            }; 
-            // Act
-            try {
-              await User.uploadCroppedPictureFile({
+        it('should error if file size is too big', (done) => {
+            const temp = meta.config.maximumProfileImageSize;
+            meta.config.maximumProfileImageSize = 5;
+
+            User.uploadCroppedPictureFile({
                 callerUid: uid,
-                uid: uid,
-                file: picture,
-              }); 
-              assert.fail('Expected error but got none');
-            } catch (error) { 
-              assert.equal(error.message, '[[error:file-too-big, 5]]'); // Adjust the expected message accordingly
-            }
-          });
+                uid: 1,
+                imageData: goodImage,
+            }, (err) => {
+                assert.equal('[[error:file-too-big, 5]]', err.message);
 
-        // it('should return error if profile image uploads disabled', (done) => {
-        //     meta.config.allowProfileImageUploads = 0; 
-        //     const picture = {
-        //         path: path.join(nconf.get('base_dir'), 'test/files/test_copy.png'),
-        //         size: 7189,
-        //         name: 'test.png',
-        //         type: 'image/png',
-        //     };
-            
-        //     User.uploadCroppedPictureFile({
-        //         callerUid: uid,
-        //         uid: uid,
-        //         file: picture,
-        //     }, (err) => {
-        //         assert.equal(err.message, '[[error:profile-image-uploads-disabled]]');
-        //         meta.config.allowProfileImageUploads = 1;
-        //         done();
-        //     });
-        // });
+                // Restore old value
+                meta.config.maximumProfileImageSize = temp;
+                done();
+            });
+        }); 
 
 
         describe('user.uploadCroppedPicture', () => {
